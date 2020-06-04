@@ -99,6 +99,7 @@ export const ADMIN_ROUTE_ACTIONS = {
 	VENUES: {
 		OVERVIEW: ADMIN_ROUTE_ACTION_DEFAULT,
 		CATEGORIES: 'category_list',
+		EDIT: 'edit',
 		GOOGLE_MAPS: 'google_map_settings',
 	},
 	SETTINGS: {
@@ -144,5 +145,5 @@ export const getAdminUrl = (
 	page = ADMIN_ROUTES.EVENTS,
 	action = ADMIN_ROUTE_ACTION_DEFAULT
 ) => {
-	return `${ ADMIN_URL }?admin.php&page=${ page }&action=${ action }`;
+	return `${ ADMIN_URL }admin.php?page=${ page }&action=${ action }`;
 };

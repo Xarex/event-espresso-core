@@ -41,12 +41,12 @@ class EEH_Autoloader extends EEH_Base
     public static $debug = false;
 
 
-
     /**
      *    class constructor
      *
      * @access    private
      * @return \EEH_Autoloader
+     * @throws Exception
      */
     private function __construct()
     {
@@ -123,7 +123,7 @@ class EEH_Autoloader extends EEH_Base
                 throw new EE_Error(sprintf(__('The file for the %s class could not be found or is not readable due to file permissions. Please ensure the following path is correct: %s', 'event_espresso'), $class, $path));
             }
             if (! isset(self::$_autoloaders[ $class ])) {
-                self::$_autoloaders[ $class ] = str_replace(array( '/', '\\' ), DS, $path);
+                self::$_autoloaders[ $class ] = str_replace(array( '/', '\\' ), '/', $path);
                 if (EE_DEBUG && ( EEH_Autoloader::$debug === 'paths' || EEH_Autoloader::$debug === 'all' || $debug )) {
                     EEH_Debug_Tools::printr(self::$_autoloaders[ $class ], $class, __FILE__, __LINE__);
                 }
@@ -146,13 +146,12 @@ class EEH_Autoloader extends EEH_Base
     }
 
 
-
-
     /**
      *  register core, model and class 'autoloaders'
      *
-     *  @access private
-     *  @return void
+     * @access private
+     * @return void
+     * @throws EE_Error
      */
     private function _register_custom_autoloaders()
     {
@@ -197,13 +196,12 @@ class EEH_Autoloader extends EEH_Base
     }
 
 
-
-
     /**
      *  register core, model and class 'autoloaders'
      *
-     *  @access public
-     *  @return void
+     * @access public
+     * @return void
+     * @throws EE_Error
      */
     public static function register_line_item_display_autoloaders()
     {
@@ -211,13 +209,12 @@ class EEH_Autoloader extends EEH_Base
     }
 
 
-
-
     /**
      *  register core, model and class 'autoloaders'
      *
-     *  @access public
-     *  @return void
+     * @access public
+     * @return void
+     * @throws EE_Error
      */
     public static function register_line_item_filter_autoloaders()
     {
@@ -225,17 +222,26 @@ class EEH_Autoloader extends EEH_Base
     }
 
 
-
-
     /**
      *  register template part 'autoloaders'
      *
-     *  @access public
-     *  @return void
+     * @access public
+     * @return void
+     * @throws EE_Error
      */
     public static function register_template_part_autoloaders()
     {
         EEH_Autoloader::register_autoloaders_for_each_file_in_folder(EE_LIBRARIES . 'template_parts', true);
+    }
+
+
+    /**
+     * @return void
+     * @throws EE_Error
+     */
+    public static function register_business_classes()
+    {
+        EEH_Autoloader::register_autoloaders_for_each_file_in_folder(EE_CORE . 'business');
     }
 
 
@@ -258,7 +264,7 @@ class EEH_Autoloader extends EEH_Base
             EEH_Debug_Tools::instance()->start_timer(basename($folder));
         }
         // make sure last char is a /
-        $folder .= $folder[ strlen($folder)-1 ] !== DS ? DS : '';
+        $folder .= $folder[ strlen($folder)-1 ] !== '/' ? '/' : '';
         $class_to_filepath_map = array();
         $exclude = array( 'index' );
         // get all the files in that folder that end in php

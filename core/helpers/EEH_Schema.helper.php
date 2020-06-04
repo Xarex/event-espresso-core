@@ -31,12 +31,15 @@ class EEH_Schema
             'event_description' => '',
             'event_start' => '',
             'event_end' => '',
+            'event_attendance_mode' => '',
+            'event_status' => '',
             'currency' => '',
             'event_tickets' => array(),
             'venue_name' => '',
             'venue_url' => '',
             'venue_locality' => '',
             'venue_region' => '',
+            'venue_address' => '',
             'event_image' => '',
         );
         $template_args['event_permalink'] = $event->get_permalink();
@@ -47,6 +50,18 @@ class EEH_Schema
         $template_args['event_start'] = $primary_datetime->start_date(DateTime::ATOM);
         $template_args['event_end'] = $primary_datetime->end_date(DateTime::ATOM);
         unset($primary_datetime);
+        switch ($event->status()) {
+            case EEM_Event::cancelled:
+                $event_status = 'EventCancelled';
+                break;
+            case EEM_Event::postponed:
+                $event_status = 'EventPostponed';
+                break;
+            default:
+                $event_status = 'EventScheduled';
+        }
+        $template_args['event_attendance_mode'] = 'OfflineEventAttendanceMode';
+        $template_args['event_status'] = '"https://schema.org/' . $event_status . '"';
         $template_args['currency'] = EE_Registry::instance()->CFG->currency->code;
         foreach ($event->tickets() as $original_ticket) {
             // clone tickets so that date formats don't override those for the original ticket
@@ -58,7 +73,7 @@ class EEH_Schema
                 $ticket->price(),
                 EE_Registry::instance()->CFG->currency->dec_plc,
                 EE_Registry::instance()->CFG->currency->dec_mrk,
-                EE_Registry::instance()->CFG->currency->thsnds
+                ''
             );
             switch ($ticket->ticket_status()) {
                 case 'TKO':
@@ -81,6 +96,13 @@ class EEH_Schema
             $template_args['venue_url'] = get_permalink($VNU_ID);
             $template_args['venue_locality'] = $venue->city();
             $template_args['venue_region'] = $venue->state_name();
+            $template_args['venue_address'] = $venue->address();
+            if ($venue->virtual_url() !== '') {
+                $template_args['event_attendance_mode'] = 'OnlineEventAttendanceMode';
+            }
+            if ($venue->virtual_url() !== '' && $venue->address() !== '') {
+                $template_args['event_attendance_mode'] = 'MixedEventAttendanceMode';
+            }
         }
         $template_args['event_image'] = $event->feature_image_url();
         $template_args = apply_filters(

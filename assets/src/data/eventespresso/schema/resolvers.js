@@ -10,8 +10,10 @@ import {
 	stripBaseRouteFromUrl,
 	createEntityFactory,
 	MODEL_PREFIXES,
-	pluralModelName,
 	singularModelName,
+	pluralModelName,
+	getPrimaryKey,
+	modelNameForQueryString,
 } from '@eventespresso/model';
 import { isUndefined } from 'lodash';
 
@@ -99,6 +101,7 @@ export function* getRelationEndpointForEntityId(
 		modelName,
 		entityId
 	);
+	relationModelName = singularModelName( relationModelName );
 	const pluralRelationName = pluralModelName( relationModelName );
 	let endpoint = '';
 	if ( isModelEntity( entity ) && entity[ pluralRelationName + 'Resource' ] ) {
@@ -117,7 +120,7 @@ export function* getRelationEndpointForEntityId(
 		const links = response._links || {};
 		const baseRelationPath = 'https://api.eventespresso.com/';
 		endpoint = links[
-			baseRelationPath + singularModelName( relationModelName )
+			baseRelationPath + relationModelName
 		] || '';
 		endpoint = ( endpoint === '' && links[
 			baseRelationPath + pluralRelationName
@@ -135,6 +138,56 @@ export function* getRelationEndpointForEntityId(
 }
 
 /**
+ * A resolver for getting the primary key string to use in a query for the given
+ * model and relation. This considers the join type for the relation.
+ *
+ * @see the `getRelationPrimaryKeyString` selector for example.
+ *
+ * @param {string} modelName
+ * @param {string} relationName
+ * @return {string} The primary key string to use or an empty string if relation
+ * type could not be determined.
+ */
+export function* getRelationPrimaryKeyString( modelName, relationName ) {
+	// normalize
+	modelName = singularModelName( modelName );
+	relationName = singularModelName( relationName );
+	const relationType = yield resolveSelect(
+		SCHEMA_REDUCER_KEY,
+		'getRelationType',
+		modelName,
+		relationName
+	);
+	if ( relationType === '' ) {
+		return '';
+	}
+	const relationPrimaryKey = getPrimaryKey( relationName );
+	return relationType === 'EE_Belongs_To_Relation' ?
+		relationPrimaryKey :
+		`${ modelNameForQueryString( relationName ) }.${ relationPrimaryKey }`;
+}
+
+/**
+ * A resolver for returning what the expected response type is for the given
+ * relation.
+ *
+ * @param {string} modelName  The model the relation is for.
+ * @param {string} relationName The model name the relation is to.
+ * @return {string} The type of the relation.
+ */
+export function* getRelationResponseType( modelName, relationName ) {
+	modelName = singularModelName( modelName );
+	relationName = singularModelName( relationName );
+	const relationSchema = yield resolveSelect(
+		SCHEMA_REDUCER_KEY,
+		'getRelationSchema',
+		modelName,
+		relationName,
+	);
+	return relationSchema !== null ? relationSchema.type : '';
+}
+
+/**
  * A resolver for returning whether the given modelName and relationName have
  * a join table for representing their relation.
  *
@@ -143,6 +196,8 @@ export function* getRelationEndpointForEntityId(
  * @return {boolean}  True means there is a join table, false means there isn't.
  */
 export function* hasJoinTableRelation( modelName, relationName ) {
+	modelName = singularModelName( modelName );
+	relationName = singularModelName( relationName );
 	const relationType = yield resolveSelect(
 		SCHEMA_REDUCER_KEY,
 		'getRelationType',
@@ -161,6 +216,8 @@ export function* hasJoinTableRelation( modelName, relationName ) {
  * @return {string}  The relation type to describe the relation
  */
 export function* getRelationType( modelName, relationName ) {
+	modelName = singularModelName( modelName );
+	relationName = singularModelName( relationName );
 	const relationSchema = yield resolveSelect(
 		SCHEMA_REDUCER_KEY,
 		'getRelationSchema',
@@ -180,8 +237,8 @@ export function* getRelationType( modelName, relationName ) {
  */
 export function* getRelationSchema( modelName, relationName ) {
 	modelName = singularModelName( modelName );
+	relationName = singularModelName( relationName );
 	const pluralRelationName = pluralModelName( relationName );
-	const singularRelationName = singularModelName( relationName );
 	const schema = yield resolveSelect(
 		SCHEMA_REDUCER_KEY,
 		'getSchemaForModel',
@@ -195,8 +252,8 @@ export function* getRelationSchema( modelName, relationName ) {
 	// is there a schema for plural relation name?
 	let typeSchema = schema.schema.properties[ pluralRelationName ] || null;
 	typeSchema = typeSchema === null &&
-		! isUndefined( schema.schema.properties[ singularRelationName ] ) ?
-		schema.schema.properties[ singularRelationName ] :
+		! isUndefined( schema.schema.properties[ relationName ] ) ?
+		schema.schema.properties[ relationName ] :
 		typeSchema;
 	if ( typeSchema === null ) {
 		throw new Error(
