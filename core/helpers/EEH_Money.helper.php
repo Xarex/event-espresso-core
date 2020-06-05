@@ -59,7 +59,7 @@ class EEH_Money extends EEH_Base
     public static function convert_to_float_from_localized_money($money_value)
     {
         // float it! and round to three decimal places
-        return round((float) EEH_Money::strip_localized_money_formatting($money_value), 3);
+        return round((float) EEH_Money::strip_localized_money_formatting($money_value), 6);
     }
 
 
@@ -215,7 +215,7 @@ class EEH_Money extends EEH_Base
 
     /**
      * @param string $CNT_ISO
-     * @return EE_Currency_Config|null
+     * @return EE_Currency_Config
      * @throws EE_Error
      */
     public static function get_currency_config($CNT_ISO = '')
