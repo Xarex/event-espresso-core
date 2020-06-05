@@ -67,7 +67,6 @@ if ($display_ticket_price) { ?>
                         </td>
                     </tr>
                 <?php }
-                // now add price modifiers
                 foreach ($ticket_price_modifiers as $price_modifier) { ?>
                     <tr>
                         <td data-th="<?php echo $name_label; ?>" class="jst-rght small-text">
@@ -94,7 +93,6 @@ if ($display_ticket_price) { ?>
                             </strong>
                         </td>
                     </tr>
-
                     <?php foreach ($taxes as $tax) { ?>
                         <tr>
                             <td data-th="<?php echo $name_label; ?>" class="jst-rght small-text">
