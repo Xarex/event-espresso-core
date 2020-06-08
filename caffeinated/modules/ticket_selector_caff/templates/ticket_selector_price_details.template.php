@@ -67,7 +67,7 @@ if ($display_ticket_price) { ?>
                         </td>
                     </tr>
                 <?php }
-                foreach ($ticket_price_modifiers as $price_modifier) { ?>
+foreach ($ticket_price_modifiers as $price_modifier) { ?>
                     <tr>
                         <td data-th="<?php echo $name_label; ?>" class="jst-rght small-text">
                             <?php echo $price_modifier->name; ?>
